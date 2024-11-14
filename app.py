@@ -1,41 +1,49 @@
-# app.py
+import numpy as np
+import tensorflow as tf
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Dropout
+from tensorflow.keras.optimizers import Adam
+from sklearn.metrics import classification_report, confusion_matrix, roc_auc_score, roc_curve
+import matplotlib.pyplot as plt
 from flask import Flask, request, jsonify
-from tensorflow.keras.models import load_model
 from PIL import Image
 import io
-import numpy as np
 
-# Initialize the Flask app
+
 app = Flask(__name__)
+model = tf.keras.models.load_model('best_model.h5')
 
-# Load the trained model
-model = load_model('best_model.h5')
-
-# Image preprocessing function
-def preprocess_image(image_bytes):
-    img = Image.open(io.BytesIO(image_bytes))
-    img = img.resize((128, 128))
-    img = np.array(img) / 255.0  # Normalize
-    return np.expand_dims(img, axis=0)
+def prepare_image(image):
+    if image.mode != 'RGB':
+        image = image.convert('RGB')
+    image = image.resize((128, 128))
+    image = np.array(image) / 255.0
+    image = np.expand_dims(image, axis=0)
+    return image
 
 @app.route('/predict', methods=['POST'])
 def predict():
     if 'file' not in request.files:
-        return jsonify({'error': 'No file part'})
-    
+        return jsonify({'error': 'No file uploaded'}), 400
+
     file = request.files['file']
     if file.filename == '':
-        return jsonify({'error': 'No selected file'})
-    
-    img_bytes = file.read()
-    img = preprocess_image(img_bytes)
-    
-    # Make prediction
-    prediction = model.predict(img)
-    class_label = 'cataract' if prediction[0][0] > 0.5 else 'normal'
-    confidence = prediction[0][0] if prediction[0][0] > 0.5 else 1 - prediction[0][0]
-    
-    return jsonify({'prediction': class_label, 'confidence': confidence})
+        return jsonify({'error': 'No file selected'}), 400
+
+    try:
+        image = Image.open(io.BytesIO(file.read()))
+        processed_image = prepare_image(image)
+        prediction = model.predict(processed_image)[0][0]
+        class_label = 'Cataract' if prediction > 0.5 else 'No Cataract'
+        confidence = float(prediction) if class_label == 'Cataract' else 1 - float(prediction)
+
+        return jsonify({
+            'class': class_label,
+            'confidence': confidence
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)
