@@ -7,7 +7,7 @@ from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, TensorBoa
 from sklearn.model_selection import train_test_split
 import os
 import matplotlib.pyplot as plt
-from sklearn.metrics import confusion_matrix
+from sklearn.metrics import confusion_matrix, f1_score
 import seaborn as sns
 from sklearn.metrics import roc_curve, roc_auc_score
 
@@ -85,7 +85,7 @@ history = model.fit(
 # Save the trained model
 model.save('best_model.h5')
 
-# Plot training and validation loss over epochs
+# Save training and validation loss over epochs
 plt.figure(figsize=(10, 5))
 plt.plot(history.history['loss'], label='Train Loss')
 plt.plot(history.history['val_loss'], label='Val Loss')
@@ -93,22 +93,46 @@ plt.title('Training and Validation Loss')
 plt.xlabel('Epochs')
 plt.ylabel('Loss')
 plt.legend()
-plt.show()
 
-# Plot confusion matrix
+# Save the plot as an image file
+plt.savefig('train_val_loss_curve.png')
+plt.close()  # Close the plot to avoid display
+
+# Calculate the confusion matrix and F1-score
 val_preds = model.predict(val_gen)
 val_preds = (val_preds > 0.5).astype(int)
 
 cm = confusion_matrix(val_gen.classes, val_preds)
-sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=['Normal', 'Cataract'], yticklabels=['Normal', 'Cataract'])
-plt.show()
 
-# ROC Curve and AUC Score
+# Calculate F1-Score
+f1 = f1_score(val_gen.classes, val_preds)
+
+# Create a heatmap for the confusion matrix
+plt.figure(figsize=(6, 6))
+sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=['Normal', 'Cataract'], yticklabels=['Normal', 'Cataract'])
+
+# Add title and F1-Score
+plt.title(f'Confusion Matrix (F1-Score: {f1:.2f})')
+plt.xlabel('Predicted')
+plt.ylabel('True')
+
+# Save the confusion matrix plot to an image file
+plt.savefig('confusion_matrix.png')
+plt.close()  # Close the plot to avoid display
+
+# Calculate ROC curve and AUC score
 fpr, tpr, thresholds = roc_curve(val_gen.classes, val_preds)
 auc = roc_auc_score(val_gen.classes, val_preds)
+
+# Plot ROC curve
 plt.plot(fpr, tpr, label=f'AUC = {auc:.2f}')
 plt.plot([0, 1], [0, 1], 'k--')
+
+# Add title and labels
 plt.xlabel('False Positive Rate')
 plt.ylabel('True Positive Rate')
-plt.title('ROC Curve')
-plt.show()
+plt.title(f'ROC Curve (AUC = {auc:.2f})')
+
+# Save the ROC curve plot to an image file
+plt.savefig('roc_curve.png')
+plt.close()  # Close the plot to avoid display

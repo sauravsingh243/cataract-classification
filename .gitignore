@@ -8,4 +8,6 @@ data/
 best_model.h5
 .gitattributes
 logs
-
+train_val_loss_curve.png
+roc_curve.png
+confusion_matrix.png
