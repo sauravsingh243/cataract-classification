@@ -6,3 +6,5 @@ matplotlib==3.7.1
 uvicorn==0.22.0
 fastapi==0.95.1
 seaborn==0.11.2
+
+# pip install flask matplotlib scikit-learn tensorflow-macos tensorflow-metal

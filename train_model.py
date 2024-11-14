@@ -1,4 +1,3 @@
-# train_model.py
 import numpy as np
 import tensorflow as tf
 from tensorflow.keras.models import Sequential
@@ -67,7 +66,7 @@ model = build_model()
 # Define callbacks
 callbacks = [
     EarlyStopping(patience=5, restore_best_weights=True),
-    ModelCheckpoint('best_model.h5', save_best_only=True)
+    # ModelCheckpoint('best_model.h5', save_best_only=True)
 ]
 
 # Train the model
