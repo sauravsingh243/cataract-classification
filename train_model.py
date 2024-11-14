@@ -3,11 +3,13 @@ import tensorflow as tf
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Dropout
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
-from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
+from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, TensorBoard
 from sklearn.model_selection import train_test_split
 import os
-from tensorflow.keras.preprocessing.image import ImageDataGenerator
 import matplotlib.pyplot as plt
+from sklearn.metrics import confusion_matrix
+import seaborn as sns
+from sklearn.metrics import roc_curve, roc_auc_score
 
 # Define paths
 train_dir = '/Users/sauravsingh243/Desktop/Jivi/train'
@@ -64,8 +66,11 @@ def build_model(input_shape=(128, 128, 3)):
 model = build_model()
 
 # Define callbacks
+log_dir = 'logs/'  # Directory where TensorBoard logs will be stored
+
 callbacks = [
     EarlyStopping(patience=5, restore_best_weights=True),
+    TensorBoard(log_dir=log_dir, histogram_freq=1),  # Log training data for TensorBoard
     # ModelCheckpoint('best_model.h5', save_best_only=True)
 ]
 
@@ -80,19 +85,25 @@ history = model.fit(
 # Save the trained model
 model.save('best_model.h5')
 
-# Evaluate the model on the validation set
+# Plot training and validation loss over epochs
+plt.figure(figsize=(10, 5))
+plt.plot(history.history['loss'], label='Train Loss')
+plt.plot(history.history['val_loss'], label='Val Loss')
+plt.title('Training and Validation Loss')
+plt.xlabel('Epochs')
+plt.ylabel('Loss')
+plt.legend()
+plt.show()
+
+# Plot confusion matrix
 val_preds = model.predict(val_gen)
 val_preds = (val_preds > 0.5).astype(int)
 
-# Plot confusion matrix
-from sklearn.metrics import confusion_matrix
-import seaborn as sns
 cm = confusion_matrix(val_gen.classes, val_preds)
 sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=['Normal', 'Cataract'], yticklabels=['Normal', 'Cataract'])
 plt.show()
 
 # ROC Curve and AUC Score
-from sklearn.metrics import roc_curve, roc_auc_score
 fpr, tpr, thresholds = roc_curve(val_gen.classes, val_preds)
 auc = roc_auc_score(val_gen.classes, val_preds)
 plt.plot(fpr, tpr, label=f'AUC = {auc:.2f}')

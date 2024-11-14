@@ -5,3 +5,7 @@ __pycache__/
 .env
 data/
 .ipynb_checkpoints
+best_model.h5
+.gitattributes
+logs
+
